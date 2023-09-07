@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public class ConnectionPoint : MonoBehaviour {
@@ -13,6 +14,9 @@ public class ConnectionPoint : MonoBehaviour {
     
     public Vector2 Location => transform.position;
     public ConnectionType Type => type;
+    
+    [CanBeNull] public Connection ConnectedConnection { get; set; }
+    public bool IsConnected => ConnectedConnection != null;
     
     public enum ConnectionType {
         Input,

@@ -15,63 +15,115 @@ namespace Construction {
         
         private ConnectionController connectionController => ConnectionController.Instance;
         
-        private bool IsDragging => DraggingSpline != null;
-        [CanBeNull] private SplineContainer _currDraggingSplineContainer;
-        [CanBeNull] private Spline DraggingSpline => _currDraggingSplineContainer == null ? null : _currDraggingSplineContainer.Spline;
+        
+        private bool IsDragging => _connectionVisualizer != null;
+        // [CanBeNull] private SplineContainer _currDraggingSplineContainer;
+        // [CanBeNull] private Spline DraggingSpline => _currDraggingSplineContainer == null ? null : _currDraggingSplineContainer.Spline;
+        [CanBeNull] private ConnectionPoint _draggingStartConnectionPoint;
+        [CanBeNull] private ConnectionVisualizer _connectionVisualizer;
 
-        [CanBeNull] private ConnectionPoint _currConnectionPointInRange;
 
+        [CanBeNull] private ConnectionPoint _connectionPointInRangeOfPointer;
+        /// <summary>
+        /// The connection point nearest to where the pointer is currently at.
+        /// </summary>
         [CanBeNull]
-        public ConnectionPoint CurrConnectionPointInRange {
-            get => _currConnectionPointInRange;
+        public ConnectionPoint ConnectionPointInRangeOfPointer {
+            get => _connectionPointInRangeOfPointer;
             private set {
-                if (_currConnectionPointInRange != null) _currConnectionPointInRange.StopHighlight();
-                _currConnectionPointInRange = value;
-                if (_currConnectionPointInRange != null) _currConnectionPointInRange.StartHighlight();
+                if (_connectionPointInRangeOfPointer != null) _connectionPointInRangeOfPointer.StopHighlight();
+                _connectionPointInRangeOfPointer = value;
+                if (_connectionPointInRangeOfPointer != null) _connectionPointInRangeOfPointer.StartHighlight();
             }
         }
 
+        /// <summary>
+        /// Cancels the current dragging operation, if any.
+        /// </summary>
+        public void CancelDragging() {
+            if (!IsDragging) return;
+            StopDragging(Vector2.zero, true);
+        }
+
+        /// <summary>
+        /// Updates which connection point is currently nearest to the pointer (if any).
+        /// Will highlight the connection point when CurrConnectionPointInRange is set.
+        /// </summary>
+        /// <param name="currentPointerPosition"></param>
         private void UpdateConnectionInRange(Vector2 currentPointerPosition) {
             if (!connectionController.GetNearestConnectionPoint(currentPointerPosition, out var nearestConnection,
                     out var distance)) return;
-            Debug.Log($"Distance to nearest connection: {distance}; connection: {nearestConnection}");
+            // Debug.Log($"Distance to nearest connection: {distance}; connection: {nearestConnection}");
             if (distance < snapDistance) {
-                if (CurrConnectionPointInRange == nearestConnection) return;
-                CurrConnectionPointInRange = nearestConnection;
+                if (ConnectionPointInRangeOfPointer == nearestConnection) return;
+                ConnectionPointInRangeOfPointer = nearestConnection;
             }
             else {
-                CurrConnectionPointInRange = null;
+                ConnectionPointInRangeOfPointer = null;
             }
         }
 
         private void StartDragging(Vector2 currentPointerPosition) {
-            if (CurrConnectionPointInRange == null) return;
+            if (ConnectionPointInRangeOfPointer == null) return;
             // Create a spline from the current connection to the pointer
-            var go = new GameObject();
-            _currDraggingSplineContainer = go.AddComponent<SplineContainer>();
-            _currDraggingSplineContainer.AddSpline();
-            // TODO Rotation of Connection
-            var connectionKnot = new BezierKnot(new Vector3(CurrConnectionPointInRange.Location.x, CurrConnectionPointInRange.Location.y, 0));
-            var pointerKnot = new BezierKnot(new Vector3(currentPointerPosition.x, currentPointerPosition.y, 0));
-            DraggingSpline.Add(connectionKnot);
-            DraggingSpline.Add(pointerKnot);
-            go.AddComponent<ConnectionLineDisplayer>();
+            _draggingStartConnectionPoint = ConnectionPointInRangeOfPointer;
+            // var go = new GameObject();
+            // _currDraggingSplineContainer = go.AddComponent<SplineContainer>();
+            // if (_currDraggingSplineContainer!.Spline == null) _currDraggingSplineContainer.AddSpline();
+            // // TODO Rotation of Connection
+            // var connectionKnot = new BezierKnot(new Vector3(CurrConnectionPointInRange.Location.x, CurrConnectionPointInRange.Location.y, 0));
+            // var pointerKnot = new BezierKnot(new Vector3(currentPointerPosition.x, currentPointerPosition.y, 0));
+            // DraggingSpline.Add(connectionKnot);
+            // DraggingSpline.Add(pointerKnot);
+            _connectionVisualizer = ConnectionVisualizer.Create(ConnectionPointInRangeOfPointer.Location, currentPointerPosition);
+            // connectionVisualizer.transform.SetParent(go.transform); // so it gets destroyed when the dragging spline is destroyed
+            // go.AddComponent<ConnectionLineDisplayer>();
         }
 
         private void UpdateDragging(Vector2 currentPointerPosition) {
-            if (DraggingSpline == null) {
-                Debug.LogError("ConnectionConstructor is dragging but has no spline");
+            if (!AssertCorrectnessWhileDragging()) return;
+            _connectionVisualizer.UpdatePositions(_draggingStartConnectionPoint.Location, currentPointerPosition);
+            
+            // var lastKnot = DraggingSpline[^1];
+            // lastKnot.Position = new Vector3(currentPointerPosition.x, currentPointerPosition.y, 0);
+            // DraggingSpline[^1] = lastKnot;
+        }
+
+        private void StopDragging(Vector2 currentPointerPosition, bool cancel = false) {
+            if (!AssertCorrectnessWhileDragging()) return;
+            
+            // Check if the pointer is close enough to a connection point
+            if (cancel || !connectionController.GetNearestConnectionPointCompatibleWith(currentPointerPosition,
+                    _draggingStartConnectionPoint, out var nearestConnectionPoint,
+                    out var distance)) {
+                // If not, destroy the spline and return
+                DestroyVisualization();
                 return;
             }
 
-            if (DraggingSpline.Count < 2) {
-                Debug.LogError("ConnectionConstructor is dragging but spline has less than 2 knots");
+            if (distance > snapDistance) {
                 return;
             }
+            // If so, create a connection between the two connection points
+            ConnectionController.Instance.CreateConnection(_draggingStartConnectionPoint, nearestConnectionPoint);
+            DestroyVisualization();
+            return;
 
-            var lastKnot = DraggingSpline[^1];
-            lastKnot.Position = new Vector3(currentPointerPosition.x, currentPointerPosition.y, 0);
-            DraggingSpline[^1] = lastKnot;
+            void DestroyVisualization() {
+                // if (_currDraggingSplineContainer != null) Destroy(_currDraggingSplineContainer.gameObject);
+                // _currDraggingSplineContainer = null;
+                if (_connectionVisualizer != null) Destroy(_connectionVisualizer.gameObject);
+                _connectionVisualizer = null;
+                _draggingStartConnectionPoint = null;
+            }
+        }
+
+        private bool AssertCorrectnessWhileDragging() {
+            if (_draggingStartConnectionPoint == null || _connectionVisualizer == null) {
+                Debug.LogError($"ConnectionConstructor is dragging but has no start connection point or connection visualizer: {_draggingStartConnectionPoint}, {_connectionVisualizer}");
+                return false;
+            }
+            return true;
         }
 
         #region Constructor Methods
@@ -80,9 +132,8 @@ namespace Construction {
             if (IsDragging) {
                 UpdateDragging(currentPointerPosition);
             }
-            else {
-                UpdateConnectionInRange(currentPointerPosition);
-            }
+            
+            UpdateConnectionInRange(currentPointerPosition);
         }
 
         public override void OnRotate(float value) {
@@ -91,7 +142,7 @@ namespace Construction {
 
         public override void OnPlace(Vector2 currentPointerPosition) {
             if (IsDragging) {
-                
+                StopDragging(currentPointerPosition);
             }
             else {
                 StartDragging(currentPointerPosition);
@@ -99,10 +150,9 @@ namespace Construction {
         }
 
         public override void End() {
-            CurrConnectionPointInRange = null;
+            ConnectionPointInRangeOfPointer = null;
             if (IsDragging) {
-                if (_currDraggingSplineContainer != null) Destroy(_currDraggingSplineContainer.gameObject);
-                _currDraggingSplineContainer = null;
+                StopDragging(Vector2.zero, false);
             }
         }
 

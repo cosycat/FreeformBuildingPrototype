@@ -82,8 +82,15 @@ public class ConnectionVisualizer : MonoBehaviour {
         }
 
         // Get all points on the spline
-        var vertsP0 = new List<Vector3>();
-        var vertsP1 = new List<Vector3>();
+        SampleLinePoints(out var vertsP0, out var vertsP1);
+
+        // BUILD MESH
+        BuildMesh(vertsP1, vertsP0);
+    }
+
+    private void SampleLinePoints(out List<Vector3> vertsP0, out List<Vector3> vertsP1, bool addLastPoint = true) {
+        vertsP0 = new List<Vector3>();
+        vertsP1 = new List<Vector3>();
         var step = 1f / Resolution;
         for (var i = 0; i < Resolution; i++) {
             var t = step * i;
@@ -91,12 +98,25 @@ public class ConnectionVisualizer : MonoBehaviour {
             vertsP0.Add(p0);
             vertsP1.Add(p1);
         }
-        
-        // BUILD MESH
+        if (addLastPoint) {
+            SampleSplineWidth(1, out var p0, out var p1);
+            vertsP0.Add(p0);
+            vertsP1.Add(p1);
+        }
+    }
+
+    private void SampleSplineWidth(float t, out Vector3 left, out Vector3 right) {
+        _spline.Evaluate(t, out var position, out var forward, out _);
+        var rightDir = Vector3.Cross(forward, new Vector3(0, 0, 1)).normalized;
+        right = (Vector3)position + (rightDir * Width);
+        left = (Vector3)position + (-rightDir * Width);
+    }
+
+    private void BuildMesh(IReadOnlyList<Vector3> vertsP1, IReadOnlyList<Vector3> vertsP0, bool connectEnds = false) {
         var mesh = new Mesh();
         var verts = new List<Vector3>();
         var tris = new List<int>();
-        var length = vertsP1.Count; //Iterate verts and build a face
+        var length = connectEnds ? vertsP1.Count : vertsP1.Count - 1;
 
         for (int i = 0; i < length; i++) {
             var p0 = vertsP0[i];
@@ -107,31 +127,24 @@ public class ConnectionVisualizer : MonoBehaviour {
             // var p3 = (i == length - 1) ? m_vertsP2[0] : m_vertsP2[i + 1]; // different logic
 
             var offset = 4 * i;
-            
+
             var t1 = offset + 0;
             var t2 = offset + 2;
             var t3 = offset + 3;
-            
+
             var t4 = offset + 3;
             var t5 = offset + 1;
             var t6 = offset + 0;
-            
-            verts.AddRange(new List<Vector3>{p0, p1, p2, p3});
-            tris.AddRange(new List<int>{t1, t2, t3, t4, t5, t6});
+
+            verts.AddRange(new List<Vector3> { p0, p1, p2, p3 });
+            tris.AddRange(new List<int> { t1, t2, t3, t4, t5, t6 });
         }
-        
+
         mesh.SetVertices(verts);
         mesh.SetTriangles(tris, 0);
         _meshFilter.mesh = mesh;
     }
 
-    private void SampleSplineWidth(float t, out Vector3 left, out Vector3 right) {
-        _spline.Evaluate(t, out var position, out var forward, out var up);
-        var rightDir = Vector3.Cross(forward, up).normalized;
-        right = (Vector3)position + (rightDir * Width);
-        left = (Vector3)position + (-rightDir * Width);
-    }
-    
     #endregion
 
 

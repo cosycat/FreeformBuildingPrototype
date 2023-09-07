@@ -42,14 +42,14 @@ namespace Construction {
         /// </summary>
         public void CancelDragging() {
             if (!IsDragging) return;
-            StopDragging(Vector2.zero, true);
+            StopDragging(Vector2.zero);
         }
 
         /// <summary>
         /// Updates which connection point is currently nearest to the pointer (if any).
         /// Will highlight the connection point when CurrConnectionPointInRange is set.
         /// </summary>
-        /// <param name="currentPointerPosition"></param>
+        /// <param name="currentPointerPosition"> The current position of the pointer. </param>
         private void UpdateConnectionInRange(Vector2 currentPointerPosition) {
             if (!connectionController.GetNearestConnectionPoint(currentPointerPosition, out var nearestConnection,
                     out var distance)) return;
@@ -63,7 +63,7 @@ namespace Construction {
             }
         }
 
-        private void StartDragging(Vector2 currentPointerPosition) {
+        private void StartDragging(Vector2 currentPointerPosition, Direction currentPointerRotation) {
             if (ConnectionPointInRangeOfPointer == null) return;
             // Create a spline from the current connection to the pointer
             _draggingStartConnectionPoint = ConnectionPointInRangeOfPointer;
@@ -75,14 +75,14 @@ namespace Construction {
             // var pointerKnot = new BezierKnot(new Vector3(currentPointerPosition.x, currentPointerPosition.y, 0));
             // DraggingSpline.Add(connectionKnot);
             // DraggingSpline.Add(pointerKnot);
-            _connectionVisualizer = ConnectionVisualizer.Create(ConnectionPointInRangeOfPointer.Location, currentPointerPosition);
+            _connectionVisualizer = ConnectionVisualizer.Create(ConnectionPointInRangeOfPointer.Location, ConnectionPointInRangeOfPointer.Direction, currentPointerPosition, currentPointerRotation);
             // connectionVisualizer.transform.SetParent(go.transform); // so it gets destroyed when the dragging spline is destroyed
             // go.AddComponent<ConnectionLineDisplayer>();
         }
 
-        private void UpdateDragging(Vector2 currentPointerPosition) {
+        private void UpdateDragging(Vector2 currentPointerPosition, Direction currentPointerRotation) {
             if (!AssertCorrectnessWhileDragging()) return;
-            _connectionVisualizer.UpdatePositions(_draggingStartConnectionPoint.Location, currentPointerPosition);
+            _connectionVisualizer!.UpdatePositions(_draggingStartConnectionPoint!.Location, _draggingStartConnectionPoint.Direction, currentPointerPosition, currentPointerRotation);
             
             // var lastKnot = DraggingSpline[^1];
             // lastKnot.Position = new Vector3(currentPointerPosition.x, currentPointerPosition.y, 0);
@@ -128,9 +128,9 @@ namespace Construction {
 
         #region Constructor Methods
 
-        public override void OnMovePointerTo(Vector2 currentPointerPosition) {
+        public override void OnPointerChanged(Vector2 currentPointerPosition, Direction currentPointerRotation) {
             if (IsDragging) {
-                UpdateDragging(currentPointerPosition);
+                UpdateDragging(currentPointerPosition, currentPointerRotation);
             }
             
             UpdateConnectionInRange(currentPointerPosition);
@@ -140,19 +140,19 @@ namespace Construction {
             Debug.Log("TODO: Rotate connection");
         }
 
-        public override void OnPlace(Vector2 currentPointerPosition) {
+        public override void OnPlace(Vector2 currentPointerPosition, Direction currentPointerRotation) {
             if (IsDragging) {
                 StopDragging(currentPointerPosition);
             }
             else {
-                StartDragging(currentPointerPosition);
+                StartDragging(currentPointerPosition, currentPointerRotation);
             }
         }
 
         public override void End() {
             ConnectionPointInRangeOfPointer = null;
             if (IsDragging) {
-                StopDragging(Vector2.zero, false);
+                StopDragging(Vector2.zero);
             }
         }
 

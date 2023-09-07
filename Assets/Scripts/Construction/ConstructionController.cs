@@ -19,6 +19,7 @@ namespace Construction {
         [CanBeNull] private Constructor _currentConstructor;
         private Constructor[] _constructors;
         private Vector2 _currentPointerPosition;
+        private Direction _currentPointerRotation;
 
         private void Start() {
             _constructors = GetComponents<Constructor>();
@@ -41,7 +42,7 @@ namespace Construction {
             if (_currentConstructor != null) {
                 _currentConstructor.IsConstructing = true;
                 _currentConstructor.Begin(subMode);
-                _currentConstructor.OnMovePointerTo(_currentPointerPosition);
+                _currentConstructor.OnPointerChanged(_currentPointerPosition, _currentPointerRotation);
             }
         }
     
@@ -64,6 +65,7 @@ namespace Construction {
         #region Input
     
         private void OnRotate(InputAction.CallbackContext callbackContext) {
+            _currentPointerRotation.Angle += callbackContext.ReadValue<float>() * rotationSpeed;
             if (_currentConstructor != null)
                 _currentConstructor.OnRotate(callbackContext.ReadValue<float>() * rotationSpeed);
         }
@@ -83,12 +85,12 @@ namespace Construction {
                 _currentPointerPosition += callbackContext.ReadValue<Vector2>();
             }
             if (_currentConstructor != null)
-                _currentConstructor.OnMovePointerTo(_currentPointerPosition);
+                _currentConstructor.OnPointerChanged(_currentPointerPosition, _currentPointerRotation);
         }
 
         private void OnClick() {
             if (_currentConstructor != null)
-                _currentConstructor.OnPlace(_currentPointerPosition);
+                _currentConstructor.OnPlace(_currentPointerPosition, _currentPointerRotation);
         }
     
         #endregion

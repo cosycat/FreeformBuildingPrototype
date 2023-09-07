@@ -6,15 +6,17 @@ public class ConnectionPoint : MonoBehaviour {
     
     private const bool ShowConnections = true;
     
-    public ConnectionController connectionController => ConnectionController.Instance;
+    public ConnectionController ConController => ConnectionController.Instance;
     private SpriteRenderer _spriteRenderer;
 
     
     [SerializeField] private ConnectionType type;
-    
+    [SerializeField] private Direction direction;
+
     public Vector2 Location => transform.position;
     public ConnectionType Type => type;
-    
+    public Direction Direction => direction;
+
     [CanBeNull] public Connection ConnectedConnection { get; set; }
     public bool IsConnected => ConnectedConnection != null;
     
@@ -25,7 +27,7 @@ public class ConnectionPoint : MonoBehaviour {
     }
 
     private void Start() {
-        connectionController.AddConnectionPoint(this);
+        ConController.AddConnectionPoint(this);
 
         _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (!ShowConnections) {
@@ -37,7 +39,7 @@ public class ConnectionPoint : MonoBehaviour {
     }
 
     private void OnDestroy() {
-        connectionController.RemoveConnectionPoint(this); // NOT TESTED
+        ConController.RemoveConnectionPoint(this); // NOT TESTED
     }
     
     public bool IsCompatibleWith(ConnectionPoint other) {
@@ -62,7 +64,7 @@ public class ConnectionPoint : MonoBehaviour {
     private void OnDrawGizmos() {
         Gizmos.color = GetSpriteRendererColor();
         Gizmos.DrawSphere(Location, 0.1f);
-    
+        Gizmos.DrawLine(Location, Location + Direction.Vector * 0.3f);
     }
     
     public void StartHighlight() {

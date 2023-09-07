@@ -13,9 +13,9 @@ public class Building : MonoBehaviour {
     }
 
     public bool IsPlaced { get; private set; } = false;
-    public float Rotation {
-        get => transform.rotation.eulerAngles.z;
-        set => transform.rotation = Quaternion.Euler(0, 0, value);
+    public Direction Rotation {
+        get => new Direction(transform.rotation.eulerAngles.z);
+        set => transform.rotation = Quaternion.Euler(0, 0, value.Angle);
     }
 
     public Vector2 Position {

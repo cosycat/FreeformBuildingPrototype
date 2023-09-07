@@ -13,12 +13,12 @@ namespace Construction {
         public bool IsConstructing { get; internal set; } = false;
 
 
-        public abstract void OnMovePointerTo(Vector2 currentPointerPosition);
+        public abstract void OnPointerChanged(Vector2 currentPointerPosition, Direction currentPointerRotation);
         
         public abstract void OnRotate(float value);
 
         public abstract ConstructionMode ConstructionMode { get; }
-        public abstract void OnPlace(Vector2 currentPointerPosition);
+        public abstract void OnPlace(Vector2 currentPointerPosition, Direction currentPointerRotation);
 
         public abstract void End();
     

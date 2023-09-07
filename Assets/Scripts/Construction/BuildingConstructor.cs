@@ -22,16 +22,17 @@ namespace Construction {
             _buildingsParent = new GameObject("Buildings");
         }
 
-        public override void OnMovePointerTo(Vector2 currentPointerPosition) {
+        public override void OnPointerChanged(Vector2 currentPointerPosition, Direction currentPointerRotation) {
             if (_currentBuilding == null) return;
             _currentBuilding.Position = currentPointerPosition;
+            _currentBuilding.Rotation = currentPointerRotation;
         }
 
         public override void OnRotate(float value) {
             if (_currentBuilding != null) _currentBuilding.transform.Rotate(Vector3.forward, value);
         }
 
-        public override void OnPlace(Vector2 currentPointerPosition) {
+        public override void OnPlace(Vector2 currentPointerPosition, Direction currentPointerRotation) {
             if (_currentBuilding == null) return;
             var currentRotation = _currentBuilding.Rotation; // make sure the next building to place keeps the same rotation
             _currentBuilding.transform.SetParent(_buildingsParent.transform);

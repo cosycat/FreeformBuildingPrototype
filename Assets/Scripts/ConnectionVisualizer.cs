@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Splines;
 using Vector2 = UnityEngine.Vector2;
@@ -28,12 +29,12 @@ public class ConnectionVisualizer : MonoBehaviour {
     /// <param name="connection"> The connection to visualize. </param>
     /// <returns> The created connection visualizer. </returns>
     public static ConnectionVisualizer Create(Connection connection) {
-        var connectionVisualizer = Create(connection.StartConnectionPoint.Location, connection.EndConnectionPoint.Location);
+        var connectionVisualizer = Create(connection.StartConnectionPoint.Location, connection.StartConnectionPoint.Direction, connection.EndConnectionPoint.Location, connection.EndConnectionPoint.Direction);
         connectionVisualizer._connection = connection;
         connection.OnConnectionRemoved += () => Destroy(connectionVisualizer.gameObject);
         return connectionVisualizer;
     }
-    
+
     /// <summary>
     /// Creates a connection visualizer between two points, without setting a connection.
     /// Use this for temporary connections, like for previewing a connection when building one.
@@ -41,24 +42,28 @@ public class ConnectionVisualizer : MonoBehaviour {
     /// </summary>
     /// <see cref="Create(Connection)"/>
     /// <param name="startPoint"> The start point of the connection. </param>
+    /// <param name="startDirection"> The direction of the start point. </param>
     /// <param name="endPoint"> The end point of the connection. </param>
+    /// <param name="endDirectionFrom"> The direction of the spline coming into the end point. </param>
     /// <returns> The created connection visualizer. </returns>
-    public static ConnectionVisualizer Create(Vector2 startPoint, Vector2 endPoint) {
+    public static ConnectionVisualizer Create(Vector2 startPoint, Direction startDirection, Vector2 endPoint, Direction endDirectionFrom) {
         var connectionVisualizer = new GameObject("Connection").AddComponent<ConnectionVisualizer>();
-        connectionVisualizer.Visualize(startPoint, endPoint);
+        connectionVisualizer.Visualize(startPoint, startDirection, endPoint, endDirectionFrom);
         connectionVisualizer.IsInitialized = true;
         return connectionVisualizer;
     }
 
-    private void Visualize(Vector2 startPoint, Vector2 endPoint) {
+    private void Visualize(Vector2 startPoint, Direction startDirection, Vector2 endPoint, Direction endDirection) {
         _splineContainer ??= gameObject.AddComponent<SplineContainer>(); // if we update the visualization, we don't want to add all these components again
         _spline = _splineContainer.Spline ?? _splineContainer.AddSpline();
         _meshFilter ??= gameObject.AddComponent<MeshFilter>();
         _meshRenderer ??= gameObject.AddComponent<MeshRenderer>();
 
         // TODO Rotation of Connection
-        var connectionKnot = new BezierKnot(new Vector3(startPoint.x,startPoint.y, 0));
-        var pointerKnot = new BezierKnot(new Vector3(endPoint.x, endPoint.y, 0));
+        var startDirectionVector = startDirection.Vector;
+        var endDirectionVector = endDirection.Vector;
+        var connectionKnot = new BezierKnot(new Vector3(startPoint.x,startPoint.y, 0), -new float3(startDirectionVector.x, startDirectionVector.y, 0), new float3(startDirectionVector.x, startDirectionVector.y, 0));
+        var pointerKnot = new BezierKnot(new Vector3(endPoint.x, endPoint.y, 0), new float3(endDirectionVector.x, endDirectionVector.y, 0), -new float3(endDirectionVector.x, endDirectionVector.y, 0));
         switch (_spline.Count) {
             case 0:
                 _spline.Add(connectionKnot);
@@ -88,7 +93,7 @@ public class ConnectionVisualizer : MonoBehaviour {
         }
         
         // BUILD MESH
-        Mesh mesh = new Mesh();
+        var mesh = new Mesh();
         var verts = new List<Vector3>();
         var tris = new List<int>();
         var length = vertsP1.Count; //Iterate verts and build a face
@@ -136,14 +141,16 @@ public class ConnectionVisualizer : MonoBehaviour {
     /// Updates the Visualizer to match the connection.
     /// Only used, when there is no corresponding connection.
     /// </summary>
-    /// <param name="startPoint"></param>
-    /// <param name="endPoint"></param>
-    public void UpdatePositions(Vector2 startPoint, Vector2 endPoint) {
+    /// <param name="startPoint"> The start point of the connection. </param>
+    /// <param name="startDirection"> The direction of the start point. </param>
+    /// <param name="endPoint"> The end point of the connection. </param>
+    /// <param name="endDirection"> The direction of the spline coming into the end point. </param>
+    public void UpdatePositions(Vector2 startPoint, Direction startDirection, Vector2 endPoint, Direction endDirection) {
         if (!IsPreviewOnly) {
             Debug.LogWarning("Updating positions of a connection visualizer that has a connection. This is not allowed. The ConnectionVisualizer will update itself upon Connection update.");
             return;
         }
-        Visualize(startPoint, endPoint);
+        Visualize(startPoint, startDirection, endPoint, endDirection);
     }
 
     #endregion

@@ -134,11 +134,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2ea9ed79c85a41a292b83f76dc15632, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connections:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
 --- !u!114 &1414072628871059245
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,6 +175,10 @@ PrefabInstance:
     - target: {fileID: 202224286931932097, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
       propertyPath: m_Name
       value: Connection
+      objectReference: {fileID: 0}
+    - target: {fileID: 8092889082517375505, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
+      propertyPath: direction.angle
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 8622172284313606691, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -247,6 +246,10 @@ PrefabInstance:
       propertyPath: type
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8092889082517375505, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
+      propertyPath: direction.angle
+      value: 180
+      objectReference: {fileID: 0}
     - target: {fileID: 8622172284313606691, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.5
@@ -308,6 +311,10 @@ PrefabInstance:
     - target: {fileID: 202224286931932097, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
       propertyPath: m_Name
       value: Connection (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8092889082517375505, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
+      propertyPath: direction.angle
+      value: -90
       objectReference: {fileID: 0}
     - target: {fileID: 8622172284313606691, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -374,6 +381,10 @@ PrefabInstance:
     - target: {fileID: 8092889082517375505, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
       propertyPath: type
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8092889082517375505, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
+      propertyPath: direction.angle
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8622172284313606691, guid: 7b5ab9869147c496f893592373237ce0, type: 3}
       propertyPath: m_LocalPosition.x

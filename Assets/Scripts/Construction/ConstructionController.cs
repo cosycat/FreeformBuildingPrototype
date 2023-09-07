@@ -67,7 +67,7 @@ namespace Construction {
         private void OnRotate(InputAction.CallbackContext callbackContext) {
             _currentPointerRotation.Angle += callbackContext.ReadValue<float>() * rotationSpeed;
             if (_currentConstructor != null)
-                _currentConstructor.OnRotate(callbackContext.ReadValue<float>() * rotationSpeed);
+                _currentConstructor.OnPointerChanged(_currentPointerPosition, _currentPointerRotation);
         }
 
         private void OnMovePointer(InputAction.CallbackContext callbackContext) {
@@ -95,8 +95,6 @@ namespace Construction {
     
         #endregion
 
-    
-    
     }
 
     public enum ConstructionMode {

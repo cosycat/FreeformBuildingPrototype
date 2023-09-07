@@ -136,10 +136,6 @@ namespace Construction {
             UpdateConnectionInRange(currentPointerPosition);
         }
 
-        public override void OnRotate(float value) {
-            Debug.Log("TODO: Rotate connection");
-        }
-
         public override void OnPlace(Vector2 currentPointerPosition, Direction currentPointerRotation) {
             if (IsDragging) {
                 StopDragging(currentPointerPosition);

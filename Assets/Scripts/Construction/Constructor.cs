@@ -15,8 +15,6 @@ namespace Construction {
 
         public abstract void OnPointerChanged(Vector2 currentPointerPosition, Direction currentPointerRotation);
         
-        public abstract void OnRotate(float value);
-
         public abstract ConstructionMode ConstructionMode { get; }
         public abstract void OnPlace(Vector2 currentPointerPosition, Direction currentPointerRotation);
 
